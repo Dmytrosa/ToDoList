@@ -1,0 +1,287 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link href="https://fonts.googleapis.com/css2?family=Montserrat+Alternates:ital,wght@0,100;0,200;1,100&display=swap" rel="stylesheet">
+<style>*{margin:0;padding:0;box-sizing:border-box}html,body{font-size:16px;font-family:"Montserrat",sans-serif;color:#457b9d;width:100%;min-height:100%}@media only screen and (min-width: 768px){html,body{font-size:22px}}body{padding:20px;background-color:#f1faee}section{background-color:#e9e9e9;width:90%;max-width:700px;margin:auto;border:1px solid #457b9d;border-radius:10px}.button{width:15%;min-width:48px;min-height:48px;color:#333333;border:2px solid #d3d3d3;border-radius:10px;outline:none}.button:hover{cursor:pointer}.button:hover,.button:focus{filter:brightness(120%);box-shadow:4px 2px 5px #457b9d}.newItemEntry{position:stiky;top:0;margin-bottom:1rem;padding:.75rem}.newItemEntry form{display:flex;justify-content:space-between}.newItemEntry form label{position:absolute;left:-10000px}.newItemEntry form input[type=text]{width:80%;font-size:1.25rem;border:2px solid #d3d3d3;border-radius:10px;padding:.75rem;outline:none}.newItemEntry form input[type=text]:focus,.newItemEntry form input[type=text]:hover{box-shadow:4px 2px 5px #1d3557}.newItemEntry form button{font-size:1.25rem;background-color:#e63946;padding:.75rem}@media only screen and (min-width: 768px){.newItemEntry form button{font-size:1.5rem}}.listContainer{min-height:60vh;padding:.75rem}.listContainer .listTitle{display:flex;justify-content:space-between;align-items:flex-end}.listContainer .listTitle .button{font-size:1rem;background-color:#e63946;padding:0 .1rem;margin-bottom:.5rem}@media only screen and (min-width: 768px){.listContainer .listTitle .button{padding:0 .5rem}}.listContainer .listTitle hr{width:100%}.listContainer .item{display:flex;justify-content:flex-start;align-items:center;padding-top:1rem}.listContainer .item input[type=checkbox]{text-align:center;width:2.5rem;min-width:48px;height:2.5rem;min-height:48px;cursor:pointer;margin-right:1.5rem}.listContainer .item input[type=checkbox]:focus+label{text-decoration:underline}.listContainer .item label{font-size:1.1rem}/*# sourceMappingURL=style.min.css.map */</style>
+
+
+
+    <script>
+/////////////////////////////////////////////////////////////////
+
+
+
+class ToDoItem{
+    constructor(){
+        this._id =null;
+        this._item = null;
+    }
+
+    getId(){
+return this._id;
+
+    }
+
+    setId(id){
+this._id = id;
+
+    }
+
+    getItem(){
+return this._item;
+
+    }
+
+    setItem(item){
+
+        this._item = item;
+    }
+};
+////////////////////////////////////////////////////////
+class ToDoList{
+constructor(){
+
+    this._arrr =[];
+}
+
+
+getList(){
+
+    return this._arrr;
+}
+
+clearList(){
+     this._arrr =[];
+}
+
+
+
+addItemToList(itemObj){
+
+    this._arrr.push(itemObj);    
+}
+
+removeItemFromList(id){
+    const arrr = this._arrr;
+    for(let i =0; i< arrr.length; i++)
+    {
+if(arrr[i]._id == id)
+{  
+    arrr.splice(i,1);
+    break;
+};
+
+    }
+}
+
+};
+
+///////////////////////////////////////////
+
+const toDoList = new ToDoList();
+
+//запуск
+document.addEventListener("readystatechange" , (event) => {
+    if (event.target.readyState === "complete"){
+        initApp();
+    }
+});
+
+
+const initApp = () => {
+const itemEntryForm = document.getElementById("itemEntryForm");
+itemEntryForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    processSubmission();
+});
+
+const clearItems = document.getElementById("clearItems");
+clearItems.addEventListener("click", (event) =>{
+    const list = toDoList.getList();
+    if(list.length){
+        const confirmed = confirm("Ви впевнені що хочете видалити весь список?");
+        if(confirmed) {
+            toDoList.clearList();
+            updatePersistentData(toDoList.getList());
+            //TODO: remove data
+            refreshThePage();
+        }
+    }
+})
+
+//загрузка об`єктів зі списку
+//оновлення сторінки
+
+loadListObject();
+
+refreshThePage();
+
+};
+
+
+const loadListObject =() =>{
+    const storedList= localStorage.getItem("myToDoList");
+    if(typeof storedList !== "string") return;
+    const parsedList = JSON.parse(storedList);
+    parsedList.forEach((itemObj) => {
+        const newToDoItem = createNewItem(itemObj._id, itemObj._item);
+        toDoList.addItemToList(newToDoItem);
+    });
+};
+
+const refreshThePage = () =>{
+
+    clearListDisplay();
+    renderList();
+    clearItemEntryField();
+    setFocusOnItemEntry();
+};
+
+const clearListDisplay = () => {
+
+    const parentElement = document.getElementById("listItems");
+    deleteContents(parentElement);
+
+};
+
+const deleteContents = (parentElement) =>{
+
+    let child = parentElement.lastElementChild;
+    while (child){
+        parentElement.removeChild(child);
+        child = parentElement.lastElementChild;
+    }
+};
+
+const renderList = () => {
+
+    const list = toDoList.getList();
+    list.forEach((item) => {
+        buildListener(item);
+        
+    });
+};
+
+const buildListener = (item) => {
+
+    const div = document.createElement("div");
+    div.className = "item";
+    const check = document.createElement("input");
+    check.type = "checkbox";
+    check.id = item.getId();
+    check.tabIndex = 0;
+    addClickListenerToCheckbox(check);
+    const label = document.createElement("label");
+    label.htmlFor = item.getId();
+    label.textContent = item.getItem();
+    div.appendChild(check);
+    div.appendChild(label);
+    const container = document.getElementById("listItems");
+    container.appendChild(div);
+
+};
+
+const addClickListenerToCheckbox = (checkbox) => {
+
+    checkbox.addEventListener("click", (event) => {
+          toDoList.removeItemFromList(checkbox.id);
+          //TODO: remove data
+          updatePersistentData(toDoList.getList());
+        setTimeout(() => {
+            refreshThePage();
+        }, 1000);
+    });
+};
+
+
+const updatePersistentData =(listArray) =>{
+    localStorage.setItem("myToDoList", JSON.stringify(listArray));
+
+};
+
+
+const clearItemEntryField = () => {
+    document.getElementById("newItem").value = "";
+};
+
+const setFocusOnItemEntry = () => {
+    document.getElementById("newItem").focus();
+};
+
+const processSubmission = () =>{
+    const newEntryText = getNewEntry();
+    if(!newEntryText.length) return ;
+    const nextItemId = calcNextItemId();
+    const toDoItem = createNewItem(nextItemId, newEntryText);
+    toDoList.addItemToList(toDoItem);
+    updatePersistentData(toDoList.getList());
+
+    //TODO: update data
+    refreshThePage();
+};
+const getNewEntry = () =>{
+        return document.getElementById("newItem").value.trim();
+    };
+
+const calcNextItemId = () => {
+    let nextItemId = 1;
+    const list = toDoList.getList();
+    if(list.length> 0)
+    {
+        nextItemId = list[list.length - 1].getId() + 1;
+    }
+    return nextItemId;
+};
+
+const createNewItem =(itemId, itemText) => {
+    const toDo = new ToDoItem();
+    toDo.setId(itemId);
+    toDo.setItem(itemText);
+    return toDo;
+};
+
+
+/////////////////////////////////////////////////
+    </script>
+
+    
+
+    <title>2d0list</title>
+</head>
+<body>
+    <main>
+        <section class = "newItemEntry">
+
+           <form id ="itemEntryForm">
+            <label for ="newItem">Що ви хочете зробити?</label>
+               <input id="newItem" type="text" size="40" autocomplete="off" placeholder="Додати нову справу" tabindex="0"/>
+               <button id="addItem" class="button"
+                   title ="Add new item" aria-label = "Add new item to list" tabindex = "0">+
+               </button>
+           </form>
+        </section>
+
+        <section class=" listContainer">
+            <div class=" listTitle">
+               <h1>
+                   Справи
+               </h1> 
+                <button id = "clearItems" class = "button" title = "Clear the list" aria-label="Remove all items from the list" tabindex = "0">
+                    Забити
+                </button>
+            </div>
+            <hr />
+            <div id = "listItems">
+               
+                  
+            </div>
+
+        </section>
+
+    </main>
+
+</body>
+</html>
